@@ -1,0 +1,241 @@
+// Materia: Programación I, Paralelo 1
+
+// Autor: leonardo romero
+
+// Fecha creación: 22/11/2023
+
+// Fecha modificación: 23/11/2023
+
+// Número de ejericio: 1
+
+// Problema planteado: ARCHIVOS BINARIOS
+#include <iostream>
+#include <fstream>
+#include <cstring>
+#include <vector>
+#include <iomanip>
+
+using namespace std;
+struct structEquiposLPFB{   //estructura para guardar los nombres de equipos
+    char nombreEquipo[50];
+    char ColorCamiseta[50];
+    char departamento[30];
+    int anioCreacion;
+};
+struct structResultadosLPFB{
+    char nombreEquipoLocal[50];
+    char nombreEquipoVisitante[50];
+    int golesEquipoLocal;
+    int golesEquipoVisitante;
+    char FechaPartido[10];
+};
+void ingresarEquipos(vector<structEquiposLPFB>& equipos);
+void mostrarTablaPosiciones (const vector<structEquiposLPFB>& equipos, const vector<structResultadosLPFB>& resultados);
+void ingresarResultados(vector<structResultadosLPFB>& resultados, const vector<structEquiposLPFB>& equipos);
+int main()
+{
+    vector<structEquiposLPFB>equipos;
+    vector<structResultadosLPFB>resultados;
+    int opcion;
+
+    do{
+        cout<<"Menu"<<endl;
+        cout<<"1-ingreso de datos de los equipos de la LPFB"<<endl;
+        cout<<"2-ingreso de los resultados de los partidos"<<endl;
+        cout<<"3-rporte de la tabla de posiciones"<<endl;
+        cout<<"4-Salir"<<endl;
+        cout<<"Seleccione una opcion"<<endl;
+        cin>>opcion;
+
+        switch(opcion)
+        {
+        case 1:
+            ingresarEquipos(equipos);
+            break;
+        case 2:
+            ingresarResultados(resultados, equipos);
+            break;
+        case 3:
+            mostrarTablaPosiciones(equipos, resultados);
+            break;
+        case 4:
+            cout<<"nos vemos"<<endl;
+            break;
+        default:
+            cout<<"opcion no valida, ingresa una opcion valida"<<endl;
+            break;
+        }
+    }while (opcion != 4);
+    return 0;
+}
+void ingresarEquipos(vector<structEquiposLPFB>& equipos)
+{
+    structEquiposLPFB equipo;
+    ifstream file("equiposLPFB.bin", ios::binary);
+    if (file.is_open())
+    {
+        while (file.read(reinterpret_cast<char*>(&equipo),sizeof(structEquiposLPFB)))
+        {
+            equipos.push_back(equipo);
+        }
+        file.close();
+    }
+    while(true)
+    {
+        cout<<"ingrese el nombre del equipo";
+        cin>> equipo.nombreEquipo;
+        if (strcmp(equipo.nombreEquipo, "fin")==0)
+            break;
+
+        bool equipoduplicado = false;
+        for (const auto& e : equipos)
+        {
+            if (strcmp(e.nombreEquipo, equipo.nombreEquipo)==0)
+            {
+                cout<<"error, ya existe un equipo con ese nombre. ingrese otro nombre"<<endl;
+                equipoduplicado = true;
+                break;
+            }
+        }
+        if(!equipoduplicado)
+        {
+            cout<<"ingrese el color de camiseta: ";
+            cin>>equipo.ColorCamiseta;
+            cout<<"ingrese el departamento: ";
+            cin>>equipo.departamento;
+            cout<<"ingrese el anio de creacion: ";
+            cin>>equipo.anioCreacion;
+            equipos.push_back(equipo);
+        }
+    }
+    ofstream outFile("EQUIPOSLPFB.bin", ios::binary | ios::trunc);
+    if(outFile.is_open())
+    {
+        for (const auto& e: equipos)
+        {
+            outFile.write(reinterpret_cast<const char*>(&e), sizeof(structEquiposLPFB));
+
+        }
+        outFile.close();
+    }
+    else
+    {
+        cout<<"no se pude abrir el archivo para escritura"<<endl;
+    }
+}
+void ingresarResultados(vector<structResultadosLPFB>& resultados, const vector<structEquiposLPFB>& equipos)
+{
+    structResultadosLPFB resultado;
+    ifstream file("resultadosLPFB.bin", ios::binary);
+    if (file.is_open())
+    {
+        while (file.read(reinterpret_cast<char*>(&resultado), sizeof(structResultadosLPFB)))
+        {
+            resultados.push_back(resultado);
+        }
+        file.close();
+    }
+    while(true)
+    {
+        cout<<"ingrese el jnombre del equipo(local)";
+        cin>>resultado.nombreEquipoLocal;
+
+        if (strcmp(resultado.nombreEquipoLocal, "fin")==0)
+            break;
+
+        bool equipolocalvalido = false;
+        for (const auto& e : equipos)
+        {
+            if (strcmp(e.nombreEquipo,resultado.nombreEquipoLocal)==0)
+            {
+                equipolocalvalido = true;
+                break;
+            }
+        }
+        if (!equipolocalvalido)
+        {
+            cout<<"error, equipo local no valido"<<endl;
+            continue;
+        }
+        cout<<"ingrese el nombre del equipo visitante: ";
+        cin>>resultado.nombreEquipoVisitante;
+        bool equipovisitantevalido = false;
+        for (const auto& e: equipos)
+        {
+            if(strcmp(e.nombreEquipo, resultado.nombreEquipoVisitante)== 0)
+            {
+                equipovisitantevalido = true;
+                break;
+            }
+        }
+        if (!equipovisitantevalido)
+        {
+            cout<<"error, equipo visitante no existente"<<endl;
+            continue;
+        }
+        cout<<"ingrese goles anotados por el equipo local";
+        cin>>resultado.golesEquipoLocal;
+        cout<<"ingrese goles anotados por el equipo visitante";
+        cin>>resultado.golesEquipoVisitante;
+        cout<<"ingrese fecha del partido (dd/mm/aaaa)";
+        cin>>resultado.FechaPartido;
+        resultados.push_back(resultado);
+    }
+    ofstream outFile("resultadosLPFB.bin", ios::binary | ios::trunc);
+    if (outFile.is_open())
+    {
+        for (const auto& r:resultados)
+        {
+            outFile.write(reinterpret_cast<const char*>(&r), sizeof(structResultadosLPFB));
+        }
+        outFile.close();
+    }
+    else
+    {
+        cout<<"no se pudo abrir el archivo"<<endl;
+    }
+}
+void mostrarTablaPosiciones (const vector<structEquiposLPFB>& equipos, const vector<structResultadosLPFB>& resultados)
+{
+    cout<<"TABLA DE POSICIONES"<<endl;
+    cout<<"|Equipo      |puntos|partidos jugados|ganados|ampatados|perdidos|"<<endl;
+    for (const auto& e: equipos)
+    {
+        int puntos=0;
+        int partidosjugados=0;
+        int ganados=0;
+        int empatados=0;
+        int perdidos=0;
+        for (const auto& r : resultados)
+        {
+            if (strcmp(r.nombreEquipoLocal, e.nombreEquipo)==0 || strcmp(r.nombreEquipoVisitante, e.nombreEquipo)==0)
+            {
+                partidosjugados++;
+                if (strcmp(r.nombreEquipoLocal, e.nombreEquipo)==0)
+                {
+                    if (r.golesEquipoLocal>r.golesEquipoVisitante)
+                        ganados++;
+                    else if (r.golesEquipoLocal==r.golesEquipoVisitante)
+                        empatados++;
+                    puntos+= (r.golesEquipoLocal>r.golesEquipoVisitante)? 3:1;
+                }
+                else if (strcmp(r.nombreEquipoVisitante, e.nombreEquipo)==0)
+                {
+                    if (r.golesEquipoVisitante>r.golesEquipoLocal)
+                        ganados++;
+                    else if (r.golesEquipoLocal==r.golesEquipoVisitante)
+                        empatados++;
+                    puntos+= (r.golesEquipoVisitante>r.golesEquipoLocal)? 3:1;
+                }
+            }
+        }
+        perdidos = partidosjugados - ganados - empatados;
+        cout<<setw(24)<<left<<e.nombreEquipo;
+        cout<<setw(6)<<right<<puntos;
+        cout<<setw(16)<<right<<partidosjugados;
+        cout<<setw(8)<<right<<ganados;
+        cout<<setw(10)<<right<<empatados;
+        cout<<setw(9)<<right<<perdidos;
+        cout<<"|"<<endl;
+    }
+}
